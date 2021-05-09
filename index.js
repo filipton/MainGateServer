@@ -4,13 +4,9 @@ MakeGateAction = false;
 const request = require('request');
 const http = require('http'); 
 
-console.log("STARTING...");
-
 http.createServer(function (req, res) { 
   var url = req.url.substring(1);
   var args = url.split("/");
-
-  console.log(url);
 
   if(args.length == 1 && args[0] == "info"){
     res.writeHead(200, {'Content-Type': 'text/html'}); res.write("Ok!"); 
