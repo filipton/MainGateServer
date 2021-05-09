@@ -1,3 +1,4 @@
+const url = require('url');
 var sec_key = process.env.secret;
 MakeGateAction = false;
 
@@ -5,9 +6,11 @@ var http = require('http'); http.createServer(function (req, res) {
   var url = req.url.substring(1);
   var args = url.split("/");
 
+  const queryObject = url.parse(req.url,true).query;
+  console.log(queryObject);
+
   if(args.length == 1 && args[0] == "info"){
-    //res.writeHead(200, {'Content-Type': 'text/html'}); res.write("Ok!"); 
-    res.writeHead(200, {'Content-Type': 'text/html'}); res.write(sec_key); 
+    res.writeHead(200, {'Content-Type': 'text/html'}); res.write("Ok!"); 
   }
   else if(args.length == 1 && args[0] == "get"){
     if(MakeGateAction == true){
