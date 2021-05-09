@@ -10,6 +10,7 @@ http.createServer(function (req, res) {
   if(args.length == 1 && args[0] == "info"){
     res.writeHead(200, {'Content-Type': 'text/html'}); res.write("Ok!"); 
     http.get('http://51.83.133.89:21371/_token/NiktNieMozeTegoUkrasc/info', (resp) => {
+      console.log("XDXD");
       resp.on('end', (body) => {
         console.log(body);
       });
