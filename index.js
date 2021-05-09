@@ -69,6 +69,6 @@ http.createServer(function (req, res) {
   }
   else{
     res.writeHead(200, {'Content-Type': 'text/html'}); res.write("BAD REQUEST");
-        res.end(); 
+    res.end(); 
   }
 }).listen(process.env.PORT | 8088);
