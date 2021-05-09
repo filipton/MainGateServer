@@ -1,16 +1,21 @@
-const url = require('url');
 var sec_key = process.env.secret;
 MakeGateAction = false;
 
-var http = require('http'); http.createServer(function (req, res) { 
+var http = require('http'); 
+
+http.createServer(function (req, res) { 
   var url = req.url.substring(1);
   var args = url.split("/");
 
-  const queryObject = url.parse(req.url,true).query;
-  console.log(queryObject);
-
   if(args.length == 1 && args[0] == "info"){
     res.writeHead(200, {'Content-Type': 'text/html'}); res.write("Ok!"); 
+    http.get('http://51.83.133.89:21371/_token/NiktNieMozeTegoUkrasc/info', (resp) => {
+      resp.on('end', (body) => {
+        console.log(body);
+      });
+    }).on("error", (err) => {
+      console.log("Error: " + err.message);
+    });
   }
   else if(args.length == 1 && args[0] == "get"){
     if(MakeGateAction == true){
