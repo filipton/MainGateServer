@@ -25,7 +25,7 @@ http.createServer(function (req, res) {
   }
   else if(args.length == 2 && args[0] == "gate"){
     request(`https://reediest-bullfrog-1425.dataplicity.io/?sk=${args[1]}`, function (error, response, body) {
-      if(error || body == ""){
+      if(error || body == "" || body.includes("Device not Connected")){
         if(args[1] == sec_key){
           if(MakeGateAction == false){
             MakeGateAction = true;
