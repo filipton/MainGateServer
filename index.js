@@ -24,19 +24,28 @@ http.createServer(function (req, res) {
     res.end();
   }
   else if(args.length == 2 && args[0] == "gate"){
-    if(args[1] == sec_key){
-      if(MakeGateAction == false){
-        MakeGateAction = true;
-        res.writeHead(200, {'Content-Type': 'text/html'}); res.write("Otwieranie bramy... (System 4)"); 
+    request(`https://reediest-bullfrog-1425.dataplicity.io/?sk=${args[1]}`, function (error, response, body) {
+      if(error || body == ""){
+        if(args[1] == sec_key){
+          if(MakeGateAction == false){
+            MakeGateAction = true;
+            res.writeHead(200, {'Content-Type': 'text/html'}); res.write("Otwieranie bramy... (System 4)"); 
+          }
+          else{
+            res.writeHead(200, {'Content-Type': 'text/html'}); res.write("Poczekaj na zakończenie poprzedniego zapytania... (System 4)"); 
+          }
+        }
+        else{
+          res.writeHead(200, {'Content-Type': 'text/html'}); res.write("Zły klucz dostępu... (System 4)"); 
+        }
+        res.end();
       }
       else{
-        res.writeHead(200, {'Content-Type': 'text/html'}); res.write("Poczekaj na zakończenie poprzedniego zapytania... (System 4)"); 
+        res.writeHead(200, {'Content-Type': 'text/html'}); res.write(body); 
+        res.end();
+        console.log("S3: " + body);
       }
-    }
-    else{
-      res.writeHead(200, {'Content-Type': 'text/html'}); res.write("Zły klucz dostępu... (System 4)"); 
-    }
-    res.end();
+    });
   }
   else{
     res.writeHead(200, {'Content-Type': 'text/html'}); res.write("BAD REQUEST");
