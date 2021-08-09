@@ -30,6 +30,7 @@ http.createServer(function (req, res) {
           if(MakeGateAction == false){
             MakeGateAction = true;
             res.writeHead(200, {'Content-Type': 'text/html'}); res.write("Otwieranie bramy... (System 4)"); 
+            setTimeout(function(){ MakeGateAction = false; }, 30000);
           }
           else{
             res.writeHead(200, {'Content-Type': 'text/html'}); res.write("Poczekaj na zakończenie poprzedniego zapytania... (System 4)"); 
