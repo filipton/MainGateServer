@@ -1,5 +1,6 @@
 var sec_key = process.env.secret;
 MakeGateAction = false;
+timeout = null;
 
 const request = require('request');
 const http = require('http'); 
@@ -28,9 +29,10 @@ http.createServer(function (req, res) {
       if(error || body == "" || body.includes("Device not Connected")){
         if(args[1] == sec_key){
           if(MakeGateAction == false){
+            clearTimeout(timeout);
             MakeGateAction = true;
             res.writeHead(200, {'Content-Type': 'text/html'}); res.write("Otwieranie bramy... (System 4)"); 
-            setTimeout(function(){ MakeGateAction = false; }, 30000);
+            timeout = setTimeout(function(){ MakeGateAction = false; }, 30000);
           }
           else{
             res.writeHead(200, {'Content-Type': 'text/html'}); res.write("Poczekaj na zakończenie poprzedniego zapytania... (System 4)"); 
