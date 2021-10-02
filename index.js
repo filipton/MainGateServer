@@ -1,30 +1,80 @@
-var sec_key = process.env.secret;
+var WebSocketServer = require("ws").Server
+var http = require("http")
+var port = process.env.PORT || 5000
 
-const request = require('request');
-const http = require('http'); 
+var Clients = new Map();
+var LastHB = new Map();
 
-http.createServer(function (req, res) { 
-  var url = req.url.substring(1);
-  var args = url.split("/");
-
-  if(args.length == 1 && args[0] == "info"){
-    res.writeHead(200, {'Content-Type': 'text/html'}); res.write("Ok!"); 
-    res.end();
-  }
-  else if(args.length == 2 && args[0] == "gate"){
-    request(`https://reediest-bullfrog-1425.dataplicity.io/?sk=${args[1]}`, function (error, response, body) {
-      if(error || body == "" || body.includes("Device not Connected")){
-        res.writeHead(500, {'Content-Type': 'text/html'}); res.write("Nie mozna nawiazac polaczenia z brama!"); 
+var server = http.createServer(function (req, res) {
+  if(req.url.includes("/test/")){
+    var tuid = req.url.replace("/test/", "");
+    if(LastHB.has(tuid)){
+      if(Date.now() - LastHB.get(tuid) >= 45000 || !Clients.has(tuid)){
+        res.statusCode = 404;
+        res.write('NOT');
         res.end();
       }
       else{
-        res.writeHead(200, {'Content-Type': 'text/html'}); res.write(body); 
+        res.statusCode = 200;
+        res.write('YES');
         res.end();
       }
-    });
+    }
+    else{
+      res.statusCode = 404;
+      res.write('NOT');
+      res.end();
+    }
+  }
+  else if(req.url.includes("/gate/")){
+    var tuid = req.url.replace("/gate/", "");
+    if(Clients.has(tuid)){
+      Clients.get(tuid).send("GATE;xyz");
+    }
+    res.write('JAJA');
+    res.end();
   }
   else{
-    res.writeHead(200, {'Content-Type': 'text/html'}); res.write("BAD REQUEST");
-    res.end(); 
+    res.write('Hello World!');
+    res.end();
   }
-}).listen(process.env.PORT || 8088);
+}).listen(port);
+
+console.log("http server listening on %d", port)
+
+var wss = new WebSocketServer({server: server, path: "/ws"})
+console.log("websocket server created")
+
+wss.on("connection", function(ws) {
+  var uid = null;
+  var id = null
+
+  console.log("websocket connection open")
+  ws.on("message", function incoming(message) {
+    var msg = message.toString();
+    if(msg.includes("SETUP")){
+      const args = msg.split(';');
+      if(args.length == 2){
+        Clients.set(args[1], ws);
+        uid = args[1];
+        console.log(msg);
+        LastHB.set(uid, Date.now());
+
+        id = setInterval(function() {
+          ws.send("HB", function() {  })
+        }, 30000);
+      }
+    }
+    if(msg.includes("ACK")){
+      LastHB.set(uid, Date.now());
+    }
+  })
+
+  ws.on("close", function() {
+    console.log("websocket connection close")
+    clearInterval(id)
+    if(Clients.has(uid) && Clients.get(uid) == ws){
+      Clients.delete(uid);
+    }
+  })
+})
