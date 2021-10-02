@@ -31,8 +31,19 @@ var server = http.createServer(function (req, res) {
     if(Clients.has(tuid)){
       Clients.get(tuid).send("GATE;xyz");
     }
-    res.write('JAJA');
+    res.write('OPENING');
     res.end();
+  }
+  else if(req.url.includes("/update/")){
+    const args = req.url.replace("/update/", "").split('/');
+    var upurl = req.url.replace("/update/", "").replace(args[0] + "/", "");
+    if(upurl != null){
+      if(Clients.has(args[0])){
+        Clients.get(args[0]).send("UPDATE;" + upurl);
+      }
+      res.write('UPDATING...' + "UPDATE;" + upurl);
+      res.end();
+    }
   }
   else{
     res.write('Hello World!');
