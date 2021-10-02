@@ -20,10 +20,17 @@ var server = http.createServer(function (req, res) {
           res.write('true');
           res.end();
         }
+        else{
+          res.statusCode = 404;
+          res.write('false');
+          res.end();
+        }
       }
-      res.statusCode = 404;
-      res.write('false');
-      res.end();
+      else{
+        res.statusCode = 404;
+        res.write('false');
+        res.end();
+      }
     }
     else if(req.url.includes("/gate/"))
     {
