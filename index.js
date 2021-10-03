@@ -2,8 +2,19 @@ var WebSocketServer = require("ws").Server
 var http = require("http")
 var port = process.env.PORT || 5000
 
+class Client {
+  constructor(ws, localip, lasthb) {
+    this.ws = ws;
+    this.localip = localip;
+    this.lasthb = lasthb;
+  }
+
+  get isAlive() {
+    return Date.now() - this.lasthb < 45000;
+  }
+}
+
 var Clients = new Map();
-var LastHB = new Map();
 
 var server = http.createServer(function (req, res) {
   var body = "";
@@ -14,12 +25,10 @@ var server = http.createServer(function (req, res) {
     if(req.url.includes("/check/"))
     {
       var tuid = req.url.replace("/check/", "");
-      if(LastHB.has(tuid)){
-        if(Date.now() - LastHB.get(tuid) < 45000 && Clients.has(tuid)){
-          res.write('true');
-          res.end();
-          return;
-        }
+      if(Clients.has(tuid) && Clients.get(tuid).isAlive){
+        res.write('true');
+        res.end();
+        return;
       }
       res.statusCode = 404;
       res.write('false');
@@ -29,8 +38,8 @@ var server = http.createServer(function (req, res) {
     {
       const args = req.url.replace("/gate/", "").split('/');
       if(args.length == 2){
-        if(Clients.has(args[0])){
-          Clients.get(args[0]).send("GATE;" + args[1]);
+        if(Clients.has(args[0]) && Clients.get(args[0]).isAlive){
+          Clients.get(args[0]).ws.send("GATE;" + args[1]);
           res.write('Otwieranie bramy...');
           res.end();
         }
@@ -42,7 +51,7 @@ var server = http.createServer(function (req, res) {
       }
       else{
         res.statusCode = 400;
-        res.write('Zly request! /gate/{device_id}/{key}');
+        res.write('Bad request! /gate/{device_id}/{key}');
         res.end();
       }
     }
@@ -50,7 +59,7 @@ var server = http.createServer(function (req, res) {
     {
       var tuid = req.url.replace("/update/", "");
       if(Clients.has(tuid) && body != ""){
-        Clients.get(tuid).send("UPDATE;" + body);
+        Clients.get(tuid).ws.send("UPDATE;" + body);
         res.write('UPDATING FROM URL: ' + body);
         res.end();
       }
@@ -62,6 +71,14 @@ var server = http.createServer(function (req, res) {
         res.write('Something went wrong!');
         res.end();
       }
+    }
+    else if(req.url.includes("/listall")){
+      var outp = "List of devices: \r\n";
+      Clients.forEach((value,key)=>{
+        outp += `ID: ${key} => IS_ALIVE: ${value.isAlive} LOCAL_IP: ${value.localip}, LASTHB: ${value.lasthb} \r\n`;
+      })
+      res.write(outp);
+      res.end();
     }
     else{
       res.write('Api for gate system!');
@@ -84,25 +101,28 @@ wss.on("connection", function(ws) {
     var msg = message.toString();
     if(msg.includes("SETUP")){
       const args = msg.split(';');
-      if(args.length == 2){
-        Clients.set(args[1], ws);
+      if(args.length == 3){
         uid = args[1];
-        LastHB.set(uid, Date.now());
+        localip = args[2];
+        Clients.set(args[1], new Client(ws, localip, Date.now()));
 
         id = setInterval(function() {
           ws.send("HB", function() {  })
         }, 30000);
+        console.log("NEW DEVICE REGISTERED! ID: " + uid + ", LOCALIP: " + localip);
       }
     }
     if(msg.includes("ACK")){
-      LastHB.set(uid, Date.now());
+      if(Clients.has(uid)){
+        Clients.get(uid).lasthb = Date.now();
+      }
     }
   })
 
   ws.on("close", function() {
     console.log("websocket connection close")
     clearInterval(id)
-    if(Clients.has(uid) && Clients.get(uid) == ws){
+    if(Clients.has(uid) && Clients.get(uid).ws == ws){
       Clients.delete(uid);
     }
   })
