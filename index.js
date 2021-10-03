@@ -75,7 +75,7 @@ var server = http.createServer(function (req, res) {
     else if(req.url.includes("/listall")){
       var outp = "List of devices: \r\n";
       Clients.forEach((value,key)=>{
-        outp += `ID: ${key} => IS_ALIVE: ${value.isAlive} LOCAL_IP: ${value.localip}, LASTHB: ${value.lasthb} \r\n`;
+        outp += `ID: ${key} => IS_ALIVE: ${value.isAlive} | LOCAL_IP: ${value.localip} | LASTHB: ${value.lasthb} \r\n`;
       })
       res.write(outp);
       res.end();
